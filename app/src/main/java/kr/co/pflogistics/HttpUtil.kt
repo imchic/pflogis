@@ -7,11 +7,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 
 
-/**
- * @todo OKHttp (Http Connection Util)
- */
-
-
 class HttpUtil() {
 
     private val client = OkHttpClient()

@@ -1,15 +1,24 @@
 package kr.co.pflogistics
 
-import android.Manifest
+import android.annotation.TargetApi
+import android.app.SearchManager
 import android.content.Context
-import android.content.pm.PackageManager
-import android.graphics.Color
+import android.database.Cursor
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.provider.SearchRecentSuggestions
 import android.util.Log
+import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.ListView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
+import com.naver.maps.map.overlay.*
 import com.naver.maps.map.util.FusedLocationSource
 import com.naver.maps.map.util.MarkerIcons
 import kotlinx.android.synthetic.main.activity_main.*
@@ -19,24 +28,6 @@ import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
 import java.util.*
-
-import android.app.SearchManager
-import android.os.Handler
-import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.ListView
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.SearchView
-import com.naver.maps.map.CameraAnimation
-
-import com.naver.maps.map.CameraUpdate
-import android.widget.Toast
-import android.provider.SearchRecentSuggestions
-import android.R.string.no
-import android.app.AppOpsManager
-import android.database.Cursor
-import androidx.core.app.ActivityCompat
-import com.naver.maps.map.overlay.*
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -52,6 +43,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     lateinit var gpsUtil: GPSUtil
 
+    var permissionFlag:Boolean = false
+
     var lon: Double = 0.0
     var lat: Double = 0.0
 
@@ -59,23 +52,29 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     val markers = mutableListOf<Marker>()
     val waypointArr = mutableListOf<LatLng>()
 
-    var requiresPermission = arrayOf(
-        Manifest.permission.INTERNET,
-        Manifest.permission.ACCESS_NETWORK_STATE,
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-    )
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         mContext = this
+        if(permissionCheck()){
+            initNaverMap(NAVER_LICENSE)
+            initSearchView()
+            // GPS 위치정보
+            gpsUtil = GPSUtil(mContext)
+        }
+    }
 
-        initNaverMap(NAVER_LICENSE)
-        locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
+    override fun onStart() {
+        super.onStart()
+    }
 
+    override fun onStop() {
+        super.onStop()
+        gpsUtil.removeUpdate()
+    }
+
+    fun initSearchView(){
         val searchManager = getSystemService(SEARCH_SERVICE) as SearchManager
         val searchView: SearchView = findViewById<SearchView>(R.id.search_view)
 
@@ -140,18 +139,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                                     if (0 < cnt.toInt()) {
                                         for (i in 0 until result.getJSONArray("addresses").length()) {
-                                            if ((result.getJSONArray("addresses")
-                                                    .get(i) as JSONObject).getString("roadAddress").contains("성남시")
-                                            ) {
-                                                addrItems.add(
-                                                    (result.getJSONArray("addresses")
-                                                        .get(i) as JSONObject).getString("roadAddress")
-                                                )
-                                                Log.d(
-                                                    "detailAddr>>>",
-                                                    (result.getJSONArray("addresses")
-                                                        .get(i) as JSONObject).getString("roadAddress")
-                                                )
+                                            if ((result.getJSONArray("addresses").get(i) as JSONObject).getString("roadAddress").contains("성남시")) {
+                                                addrItems.add((result.getJSONArray("addresses").get(i) as JSONObject).getString("roadAddress"))
+                                                Log.d("detailAddr>>>", (result.getJSONArray("addresses").get(i) as JSONObject).getString("roadAddress"))
                                             }
                                         }
 
@@ -159,8 +149,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                                             val rowList: View = layoutInflater.inflate(R.layout.row, null)
                                             listView = rowList.findViewById(R.id.listView)
 
-                                            val adapter =
-                                                ArrayAdapter(mContext, android.R.layout.simple_list_item_1, addrItems)
+                                            val adapter = ArrayAdapter(mContext, android.R.layout.simple_list_item_1, addrItems)
                                             listView.adapter = adapter
 
                                             listView.setOnItemClickListener { parent, view, position, id ->
@@ -222,18 +211,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         })
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        if (locationSource.onRequestPermissionsResult(requestCode, permissions, grantResults)) {
-            if (!locationSource.isActivated) { // 권한 거부됨
-                naverMap.locationTrackingMode = LocationTrackingMode.None
-            } else {
-                naverMap.locationTrackingMode = LocationTrackingMode.Follow
-            }
-            return
-        }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-    }
-
     private fun initNaverMap(key: String) {
 
         NaverMapSdk.getInstance(this).client = NaverMapSdk.NaverCloudPlatformClient(key)
@@ -250,12 +227,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onMapReady(naverMap: NaverMap) {
 
-        // GPS 위치정보
-        gpsUtil = GPSUtil(mContext)
         gpsUtil.getLocation()
 
         lon = gpsUtil.getLatitude()
         lat = gpsUtil.getLongitude()
+
+        onMapGetXY(lon, lat)
 
         this.naverMap = naverMap
 
@@ -271,45 +248,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         this.uiSettings.isLocationButtonEnabled = true
         this.uiSettings.isRotateGesturesEnabled = false
 
-        this.naverMap.moveCamera(
+        /*this.naverMap.moveCamera(
             CameraUpdate.toCameraPosition(
                 CameraPosition(
                     LatLng(lon, lat),
                     this.naverMap.cameraPosition.zoom
                 )
             ).animate(CameraAnimation.Easing)
-        )
+        )*/
 
         this.naverMap.addOnLocationChangeListener { location ->
-
-            naverMap.locationTrackingMode = LocationTrackingMode.Follow
-
-            println("$lon, $lat")
-
-            Log.d("mapChange>>>", "${location.latitude}, ${location.longitude}")
-            runOnUiThread {
-                HttpUtil.getInstance(this).get(
-                    //"$VWORLD_GEOCODER_ADDR_API_URL&point=${lonlat.longitude},${lonlat.latitude}&format=json&type=road&zipcode=true&simple=false&key=$VWORLD_LICENSE",
-                    "https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${location.longitude}&y=${location.latitude}&input_coord=WGS84",
-                    object : Callback {
-                        override fun onFailure(call: Call, e: IOException) {
-                            println(e.toString())
-                        }
-
-                        override fun onResponse(call: Call, response: Response) {
-                            try {
-                                //Log.d("response>>>", (JSONObject(response.body!!.string()).getJSONArray("documents").get(0) as JSONObject).getJSONObject("address").getString("address_name"))
-                                //if (txtAddr != null) {
-                                runOnUiThread {
-                                    txtAddr.text = "현재 GPS: ${(JSONObject(response.body!!.string()).getJSONArray("documents").get(0) as JSONObject).getJSONObject("address").getString("address_name")}"
-                                }
-                                //}
-                            } catch (e: NullPointerException) {
-                                Log.e("hbim", e.toString())
-                            }
-                        }
-                    });
-            }
+            //naverMap.locationTrackingMode = LocationTrackingMode.Follow
+            //Log.d("mapChange>>>", "${location.latitude}, ${location.longitude}")
         }
 
     }
@@ -332,7 +282,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     /***  마커 객체 생성*/
     private fun setMarker(lat: Double, lon: Double) {
-        //onMapGetXY(lon, lat)
         val marker = Marker()
         marker.position = LatLng(lat, lon)
 
@@ -447,7 +396,74 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
      */
     fun onMapGetXY(x: Double, y: Double) {
         Log.d("onMapGetXY>>", "$x, $y")
+        runOnUiThread {
+            HttpUtil.getInstance(this).get(
+                "https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${y}&y=${x}&input_coord=WGS84",
+                object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        println(e.toString())
+                    }
+
+                    override fun onResponse(call: Call, response: Response) {
+                        try {
+                            val resultStr = JSONObject(response.body!!.string().toString())
+
+                            var roadAddr = (resultStr.getJSONArray("documents").get(0) as JSONObject).getString("road_address")
+                            var jibunAddr = (resultStr.getJSONArray("documents").get(0) as JSONObject).getString("address")
+
+                            if(roadAddr != "null"){
+                                roadAddr = JSONObject(roadAddr).getString("address_name")
+                            }
+                            if(jibunAddr != "null"){
+                                jibunAddr = JSONObject(jibunAddr).getString("address_name")
+                            }
+
+                            Log.d("addr", "$roadAddr, $jibunAddr")
+
+                            runOnUiThread {
+                                if(roadAddr == "null"){
+                                    txtAddr.text = "지번주소: $jibunAddr"
+                                } else {
+                                    txtAddr.text = "지번주소: $jibunAddr \n 도로명주소: $roadAddr"
+                                }
+
+                            }
+                        } catch (e: NullPointerException) {
+                            Log.e("hbim", e.toString())
+                        }
+                    }
+                })
+        }
     }
+
+    /*앱 실행 권한 체크*/
+    @TargetApi(Build.VERSION_CODES.M)
+    fun permissionCheck(): Boolean {
+        // 마시멜로우 이상
+        if(!PermissionUtil.getInstance(mContext).hasPermission(mContext)){
+            PermissionUtil.getInstance(mContext).requestPermission(mContext)
+            Log.d("permission Status >>>", "Request")
+        } else {
+            PermissionUtil.getInstance(mContext).shouldShowRequestPermissionRationale(mContext)
+            Log.d("permisiion Status >>>", "reCheck")
+            permissionFlag = true
+        }
+        return permissionFlag
+    }
+
+    /* 퍼미션 Result Event */
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        if (locationSource.onRequestPermissionsResult(requestCode, permissions,
+                grantResults)) {
+            if (!locationSource.isActivated) { // 권한 거부됨
+                naverMap.locationTrackingMode = LocationTrackingMode.None
+            }
+            return
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+
+
 
     companion object {
 
@@ -458,7 +474,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         private const val VWORLD_GEOCODER_COORD_API_URL = // 주소를 좌표로 변환
             "http://api.vworld.kr/req/address?service=address&request=getCoord&version=2.0&crs=epsg:4326&"
 
-        private const val LOCATION_PERMISSION_REQUEST_CODE = 1000
+        private const val PERMISSION_REQUEST_CODE = 1000
         private val TAG: String? = MainActivity::class.simpleName
     }
 

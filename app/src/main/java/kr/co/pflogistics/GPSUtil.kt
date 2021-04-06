@@ -25,8 +25,6 @@ class GPSUtil(context: Context) : LocationListener {
     private var lat: Double = 0.0;
     private var lon: Double = 0.0;
 
-    private var lonLat: String? = null;
-
     private var mLocation: Location? = null;
     private var mLocationManager: LocationManager? = null;
 
@@ -35,9 +33,7 @@ class GPSUtil(context: Context) : LocationListener {
         lat = location.latitude;
         lon = location.longitude;
 
-        println("위도: ${lat}, 경도:${lon}")
-
-        MainActivity().onMapGetXY(lat, lon)
+        Log.d("gpsUtil>>", "위도: ${lat}, 경도:${lon}")
     }
 
 
@@ -66,6 +62,10 @@ class GPSUtil(context: Context) : LocationListener {
         } catch (e: Exception) {
             Log.e("hbim", e.toString())
         }
+    }
+
+    fun removeUpdate(){
+        mLocationManager?.removeUpdates(this)
     }
 
     // 위도
