@@ -10,10 +10,6 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
-import com.naver.maps.map.overlay.Align
-import com.naver.maps.map.overlay.Marker
-import com.naver.maps.map.overlay.OverlayImage
-import com.naver.maps.map.overlay.PathOverlay
 import com.naver.maps.map.util.FusedLocationSource
 import com.naver.maps.map.util.MarkerIcons
 import kotlinx.android.synthetic.main.activity_main.*
@@ -40,6 +36,7 @@ import android.R.string.no
 import android.app.AppOpsManager
 import android.database.Cursor
 import androidx.core.app.ActivityCompat
+import com.naver.maps.map.overlay.*
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -60,7 +57,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     var lineOverLayList = ArrayList<LatLng>()
     val markers = mutableListOf<Marker>()
-    val waypointArr = mutableListOf<String>()
+    val waypointArr = mutableListOf<LatLng>()
 
     var requiresPermission = arrayOf(
         Manifest.permission.INTERNET,
@@ -348,8 +345,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         if(lineOverLayList.size == 0){
             if (lat != 0.0) {
+                // 2 이상 좌표가 존재해야 라인스트링이 그려짐
                 for (i in 0..2) {
                     lineOverLayList.add(LatLng(lat, lon))
+                    waypointArr.add(LatLng(lat, lon))
                 }
             }
         } else {
@@ -410,10 +409,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     if(JSONObject(resultRoot).getString("code").toString() == "0"){
 
                         val rootPath = (JSONObject(resultRoot).getJSONObject("route").getJSONArray("trafast").get(0) as JSONObject).getJSONArray("path")
+                        var rootLonLat:String
 
                         for (i in 0 until rootPath.length()) {
-                            waypointArr.add(rootPath[i].toString())
-
+                            rootLonLat = rootPath[i].toString().replace("[", "").replace("]", "")
+                            waypointArr.add(LatLng(rootLonLat.split(",")[1].toDouble(), rootLonLat.split(",")[0].toDouble()))
                             //Log.d("pass", resultRoot)
                         }
 
@@ -423,14 +423,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         })
 
         val pathOverLay = PathOverlay()
-        pathOverLay.color = Color.BLUE
+        val rootOverLay = PolylineOverlay()
+
+      /*  pathOverLay.color = Color.BLUE
         pathOverLay.patternImage = OverlayImage.fromResource(R.drawable.path_pattern)
-        pathOverLay.patternInterval = 10
+        pathOverLay.patternInterval = 10*/
+
+        rootOverLay.joinType = PolylineOverlay.LineJoin.Round
+        rootOverLay.color = getColor(R.color.dark_red)
+        rootOverLay.width = 15
 
         //lineOverLayList.add(LatLng(lat, lon))
+        //pathOverLay.coords = lineOverLayList
 
-        pathOverLay.coords = lineOverLayList
-        pathOverLay.map = map
+        rootOverLay.coords = waypointArr
+        rootOverLay.map = map
+        //pathOverLay.map = map
 
     }
 
