@@ -8,7 +8,6 @@ package kr.co.pflogistics
 import android.Manifest
 import android.app.SearchManager
 import android.content.Context
-import android.content.pm.PackageManager
 import android.database.Cursor
 import android.os.Build
 import android.os.Bundle
@@ -26,7 +25,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import com.google.gson.Gson
-import com.google.gson.JsonElement
 import com.google.gson.JsonParser
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
@@ -39,7 +37,6 @@ import okhttp3.Callback
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
-import java.util.*
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -298,14 +295,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     object : Callback {
                         override fun onFailure(call: Call, e: IOException) { println(e.toString()) }
                         override fun onResponse(call: Call, response: Response) {
-                            var resultData = gson.toJson(response.body!!.string())
-                            var jsonParser:JsonParser = JsonParser()
-                            var jsonElement:JsonElement = jsonParser.parse(resultData)
 
-                            logUtil.i(jsonElement.toString())
+                            val resultData = JsonParser().parse(response.body!!.string()).asJsonObject
 
-                            //logUtil.i(jsonElement.asJsonObject.get("response").asString)
-                            //txtAddr.text = "현재 GPS위치: ${(JSONObject(response.body?.string()).getJSONObject("response").getJSONArray("result").get(0) as JSONObject).getString("text").toString()} (위도:${lonlat.latitude}, 경도:${lonlat.longitude})"
+                            var status = resultData.get("response").asJsonObject.get("status").toString()
+                            var point = resultData.get("response").asJsonObject.get("input").asJsonObject.get("point").asJsonObject
+                            logUtil.d( "${point.get("x").asString} ${point.get("y").asString}")
+
+                            runOnUiThread {
+                                if(status != "NOT_FOUND"){
+                                    //txtAddr.text = "현재 GPS위치: $"
+                                }
+                            }
                         }
                     });
         }
