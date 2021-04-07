@@ -11,12 +11,13 @@ import okhttp3.Request
  * @todo OKHttp (Http Connection Util)
  */
 
-
 class HttpUtil() {
+
+    val logUtil = LogUtil(TAG!!)
 
     private val client = OkHttpClient()
 
-    fun get(httpUrl: String, callback: Callback) {
+    fun callerUrlInfo(httpUrl: String, callback: Callback) {
 
         val request = Request.Builder()
             .addHeader("Authorization", "KakaoAK adb6ce5526f7defccdf3fed9f6610074")
@@ -25,8 +26,7 @@ class HttpUtil() {
             .url(httpUrl)
             .build()
 
-        Log.d("httpUrl>>>", httpUrl)
-
+        logUtil.d(httpUrl)
         client.newCall(request).enqueue(callback);
     }
 

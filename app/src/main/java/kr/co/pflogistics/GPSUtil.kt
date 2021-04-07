@@ -8,9 +8,12 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /**
  * GPS 유틸
@@ -19,52 +22,64 @@ import androidx.core.content.ContextCompat
 
 class GPSUtil(context: Context) : LocationListener {
 
-    private var mContext: Context = context;
+    var context: Context = context
+    lateinit var logUtil: LogUtil
 
     // 위도, 경도
-    private var lat: Double = 0.0;
-    private var lon: Double = 0.0;
+    private var lat: Double = 0.0
+    private var lon: Double = 0.0
 
-    private var lonLat: String? = null;
+    var flag: Boolean = false
 
-    private var mLocation: Location? = null;
-    private var mLocationManager: LocationManager? = null;
+    private var mLocation: Location? = null
+    private var mLocationManager: LocationManager? = null
 
     override fun onLocationChanged(location: Location) {
+        if (location !== null) {
+            lat = location.latitude;
+            lon = location.longitude;
+        }
 
-        lat = location.latitude;
-        lon = location.longitude;
-
-        println("위도: ${lat}, 경도:${lon}")
-
-        MainActivity().onMapGetXY(lat, lon)
+        flag = true
+        logUtil = LogUtil(TAG!!)
+        logUtil.d("위치변경: $flag 위도: $lat, 경도:$lon")
     }
-
 
     override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
     }
+
 
     /** ============================================================================================================= */
 
     fun getLocation() {
 
         try {
-            mLocationManager = mContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            mLocationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             if (ActivityCompat.checkSelfPermission(
-                mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 return
             }
             mLocation = mLocationManager!!.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if ((ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
+            if ((ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED)
+            ) {
                 ActivityCompat.requestPermissions(
-                    mContext as Activity,
-                    IntroActivity().requiresPermission, LOCATION_PERMISSION_CODE
+                    context as Activity,
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                    LOCATION_PERMISSION_CODE
                 )
             }
-            mLocationManager!!.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100000, 5f, this)
+            mLocationManager!!.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 5f, this)
 
         } catch (e: Exception) {
-            Log.e("hbim", e.toString())
+            TAG?.let { LogUtil(it).e(e.toString()) };
         }
     }
 
@@ -81,8 +96,21 @@ class GPSUtil(context: Context) : LocationListener {
     }
 
     companion object {
+
+        @Volatile
+        private var instance: GPSUtil? = null
+
+        @JvmStatic
+        fun getInstance(context: Context): GPSUtil =
+            instance ?: synchronized(this) {
+                instance ?: GPSUtil(context).also {
+                    instance = it
+                }
+            }
+
         private val TAG: String? = GPSUtil::class.simpleName;
         private const val LOCATION_PERMISSION_CODE = 2000
     }
+
 
 }
