@@ -21,6 +21,8 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        debug{
+        }
     }
 }
 
@@ -36,6 +38,9 @@ dependencies {
 
     // http
     implementation 'com.squareup.okhttp3:okhttp:4.9.0'
+
+    //gson
+    implementation 'com.google.code.gson:gson:2.8.6'
 
     // coroutines (비동기)
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3'

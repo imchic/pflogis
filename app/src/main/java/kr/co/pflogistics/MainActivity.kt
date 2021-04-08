@@ -24,7 +24,10 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.PermissionChecker
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
@@ -57,18 +60,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var gpsUtil: GPSUtil
     lateinit var logUtil: LogUtil
 
-    // list
-    private var lineLatLngArr = ArrayList<LatLng>() // PolyLine
-    private val markersArr = mutableListOf<Marker>() // 마커
-    val waypointArr = mutableListOf<LatLng>() //  경유지
-    private val selectedAddrArr = mutableListOf<String>()
-    private val requiresPermission = arrayOf(
-            Manifest.permission.INTERNET,
-            Manifest.permission.ACCESS_NETWORK_STATE,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-    )
+    var lon:Double = 0.0
+    var lat:Double = 0.0
 
+    // list
+    var lineLatLngArr = ArrayList<LatLng>() // PolyLine
+    var markersArr = mutableListOf<Marker>() // 마커
+    var waypointArr = mutableListOf<LatLng>() //  경유지
+    var selectedAddrArr = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -86,16 +85,51 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         locationSource = FusedLocationSource(this, PERMISSION_REQUEST_CODE)
         initUI()
         initNaverMap(NAVER_LICENSE)
-        gpsUtil = GPSUtil(mContext)
-        gpsUtil.getLocation()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if(hasPermission()){
+            map_fragment.onStart()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        map_fragment.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        map_fragment.onPause()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        map_fragment.onSaveInstanceState(outState)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        map_fragment.onStop()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        map_fragment.onDestroy()
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        map_fragment.onLowMemory()
     }
 
     fun initUI(){
 
         mContext = this
         logUtil = LogUtil(TAG!!)
-        gson = Gson()
 
+        sw_map_switch.text = "일반/위성"
         val searchManager = getSystemService(SEARCH_SERVICE) as SearchManager
         val searchView: SearchView = findViewById(R.id.search_view)
 
@@ -118,7 +152,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         })
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextChange(newText: String): Boolean { logUtil.i(newText); return false }
+            override fun onQueryTextChange(newText: String): Boolean { return false }
             override fun onQueryTextSubmit(query: String): Boolean {
 
                 val searchRecentSuggestions = SearchRecentSuggestions(mContext, SearchHistoryProvider.AUTHORITY, SearchHistoryProvider.MODE)
@@ -144,7 +178,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                             override fun onResponse(call: Call, response: Response) {
                                 try {
-                                    if (txtAddr != null) {
                                         val result = JSONObject(response.body!!.string())
                                         val cnt = result.getJSONObject("meta").getString("totalCount")
                                         logUtil.i(result.toString())
@@ -230,7 +263,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                                             }
                                         }
 
-                                    }
                                 } catch (e: NullPointerException) {
                                     logUtil.e(e.toString())
                                 }
@@ -241,13 +273,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         })
     }
 
-
     // 네이버 MAP SDK Init
-    private fun initNaverMap(key: String) {
+    fun initNaverMap(key: String) {
         NaverMapSdk.getInstance(this).client = NaverMapSdk.NaverCloudPlatformClient(key)
         val fm = supportFragmentManager
         val mapFragment = fm.findFragmentById(R.id.map_fragment) as MapFragment? ?: MapFragment.newInstance().also { fm.beginTransaction().add(R.id.map_fragment, it).commit() }
         mapFragment.getMapAsync(this)
+
+        // GPS 위치정보
+        gpsUtil = GPSUtil(mContext)
+        gpsUtil.getLocation()
+
+        lat = gpsUtil.getLatitude()
+        lon = gpsUtil.getLongitude()
+
+        logUtil.d("$lat, $lon")
     }
 
     // 네이버 MAP SDK
@@ -257,7 +297,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         this.naverMap.locationSource = locationSource
         this.naverMap.isIndoorEnabled = true
-        //this.naverMap.locationTrackingMode = LocationTrackingMode.Follow
+        this.naverMap.locationTrackingMode = LocationTrackingMode.Follow
 
         this.uiSettings = naverMap.uiSettings
         this.uiSettings.isCompassEnabled = true
@@ -267,53 +307,72 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         this.uiSettings.isLocationButtonEnabled = true
         this.uiSettings.isRotateGesturesEnabled = false
 
-        onMapGetXY(gpsUtil.getLongitude(), gpsUtil.getLatitude())
-        //this.naverMap.moveCamera(cameraUpdate())
-
-        naverMap.addOnLocationChangeListener { location ->
-            Toast.makeText(this, "${location.latitude}, ${location.longitude}", Toast.LENGTH_SHORT).show()
+        sw_map_switch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                this.naverMap.mapType = NaverMap.MapType.Hybrid
+            } else {
+                this.naverMap.mapType = NaverMap.MapType.Basic
+            }
         }
+
+        onMapGetXY(lon, lat)
+
     }
 
+    // 퍼미션 체크
+    fun hasPermission(): Boolean {
+        return PermissionChecker.checkSelfPermission(this, PERMISSIONS[0]) ==
+                PermissionChecker.PERMISSION_GRANTED &&
+                PermissionChecker.checkSelfPermission(this, PERMISSIONS[1]) ==
+                PermissionChecker.PERMISSION_GRANTED
+    }
+
+    // 퍼미션 결과
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         if (locationSource.onRequestPermissionsResult(requestCode, permissions, grantResults)) {
-            if (!locationSource.isActivated) { // 권한 거부됨
-                naverMap.locationTrackingMode = LocationTrackingMode.None
+            if (hasPermission()) {
+                naverMap.locationTrackingMode = LocationTrackingMode.Follow
             }
+            /*if (!locationSource.isActivated) { // 권한 거부됨
+                naverMap.locationTrackingMode = LocationTrackingMode.None
+            }*/
             return
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
+    // RestAPI String to JSONObject
+    fun getResultToGSON(resultStr: String): JsonObject {
+        gson = Gson()
+        return JsonParser().parse(resultStr).asJsonObject
+    }
 
-    /** 현재 위경도 가져오기 */
+   // 현재 위경도 가져오기
     fun onMapGetXY(lon: Double, lat: Double) {
-
         runOnUiThread {
             HttpUtil.getInstance(this).callerUrlInfo(
                     "$VWORLD_GEOCODER_ADDR_API_URL&point=$lon,$lat&format=json&type=parcel&zipcode=true&simple=false&key=$VWORLD_LICENSE",
                     object : Callback {
                         override fun onFailure(call: Call, e: IOException) { println(e.toString()) }
                         override fun onResponse(call: Call, response: Response) {
+                            var resultData = getResultToGSON(response.body!!.string())
+                            var status = resultData.get("response").asJsonObject.get("status").asString
 
-                            val resultData = JsonParser().parse(response.body!!.string()).asJsonObject
-
-                            var status = resultData.get("response").asJsonObject.get("status").toString()
-                            var point = resultData.get("response").asJsonObject.get("input").asJsonObject.get("point").asJsonObject
-                            logUtil.d( "${point.get("x").asString} ${point.get("y").asString}")
-
-                            runOnUiThread {
-                                if(status != "NOT_FOUND"){
-                                    //txtAddr.text = "현재 GPS위치: $"
+                            if (status != "NOT_FOUND") {
+                                //var point = resultData.get("response").asJsonObject.get("input").asJsonObject.get("point").asJsonObject
+                                var addr = (resultData.get("response").asJsonObject.get("result").asJsonArray.get(0).asJsonObject.get("text").asString)
+                                runOnUiThread { ->
+                                    //if (status != "NOT_FOUND") { txtAddr.text = "지번주소: $addr" } else Toast.makeText(mContext, "잘못된 결과값", Toast.LENGTH_SHORT).show()
                                 }
                             }
-                        }
-                    });
+
+                    }
+            });
         }
     }
 
     //마커 객체 생성
-    private fun setMarker(lat: Double, lon: Double) {
+    fun setMarker(lat: Double, lon: Double) {
         val marker = Marker()
         marker.position = LatLng(lat, lon)
 
@@ -352,14 +411,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     // 이동경로 표시
-    private fun addLineOverLay(map: NaverMap, lat: Double, lon: Double) {
+    fun addLineOverLay(map: NaverMap, lat: Double, lon: Double) {
 
         val sumStr = lon.toString() + lat.toString()
         selectedAddrArr.add(sumStr)
         val sumSelectedAddr: String = selectedAddrArr.joinToString(separator = ":")
 
-        logUtil.d("$lineLatLngArr.size")
-        logUtil.d(sumSelectedAddr)
+        //logUtil.d("$lineLatLngArr.size")
+        //logUtil.d(sumSelectedAddr)
 
         val pathOverLay = PathOverlay()
         val rootOverLay = PolylineOverlay()
@@ -380,28 +439,96 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     object : Callback {
                         override fun onFailure(call: Call, e: IOException) { logUtil.e(e.toString()) }
                         override fun onResponse(call: Call, response: Response) {
-                            val resultRoot = JSONObject(response.body!!.string()).toString()
+                            val resultRoot = getResultToGSON(response.body!!.string())!!
+                            val trafast = resultRoot.get("route").asJsonObject.get("trafast").asJsonArray.get(0)
 
-                            if(JSONObject(resultRoot).getString("code").toString() == "0"){
+                            /**
+                             * code = '0' 성공 , '-1' 실패
+                             * Congestion code(구간혼잡도) '1' 원활 '2' 서행 '3' 혼잡
+                             * Speed(평균속도)  원활 30이상, 서행 15~30, 혼잡 15미만
+                             */
+                            if(resultRoot.get("code").asString.toString() == "0"){
+                                val totalDistance = ((trafast as JsonObject).get("summary") as JsonObject).get("distance").asString.toInt() * 0.001
+                                var duariton = ((trafast as JsonObject).get("summary") as JsonObject).get("distance").asString.toInt()
+                                duariton = (duariton / 1000) % 60
+                                //val duariton = ((((trafast as JsonObject).get("summary") as JsonObject).get("duration").asString.toInt()) / (1000 * 60)) % 60 )
 
-                                //Toast.makeText(mContext, JSONObject(resultRoot).getString("message"), Toast.LENGTH_SHORT).show()
+                                val rootPath = trafast.asJsonObject.get("path").asJsonArray // 경로
+                                val selection = trafast.asJsonObject.get("section").asJsonArray // 섹션
+                                val guildLine = trafast.asJsonObject.get("guide").asJsonArray // 가이드라인
 
-                                val rootPath = (JSONObject(resultRoot).getJSONObject("route").getJSONArray("trafast").get(0) as JSONObject).getJSONArray("path")
                                 var rootLonLat:String
+                                var sumSectionMsg:String = ""
 
-                                for(i in 0 until rootPath.length()) {
+                                for(i in 0 until rootPath.size()) {
                                     rootLonLat = rootPath[i].toString().replace("[", "").replace("]", "")
                                     waypointArr.add(LatLng(rootLonLat.split(",")[1].toDouble(), rootLonLat.split(",")[0].toDouble()))
-                                    //Log.d("pass", resultRoot)
                                 }
 
+                                for(i in 0 until selection.size()){
+                                    //logUtil.i("길찾기 세션: ${getResultToGSON(selection[i].toString())}")
+                                    var sectionDistance = getResultToGSON(selection[i].toString()).get("distance").asString
+                                    sectionDistance = if (sectionDistance.toString().length > 3) { String.format("%.2f", (sectionDistance.toInt() * 0.001)) + "km" } else { sectionDistance.toString() + "m" }
+
+                                    var sectionCongestionCode = getResultToGSON(selection[i].toString()).get("congestion").asString
+                                    when (sectionCongestionCode) {
+                                       "0" -> sectionCongestionCode = "거의없음"
+                                       "1" -> sectionCongestionCode = "원활"
+                                       "2" -> sectionCongestionCode = "서행"
+                                       "3" -> sectionCongestionCode = "혼잡"
+                                    }
+                                    var sectionCongestionSpeed = getResultToGSON(selection[i].toString()).get("speed").asString + "km/h"
+
+                                    sumSectionMsg += "거리:${sectionDistance}  혼잡도:$sectionCongestionCode  평균속도:$sectionCongestionSpeed \n"
+                                    logUtil.i(sumSectionMsg)
+                                    runOnUiThread {
+
+                                        bottompanel.isClickable = true
+                                        val bottomSheetBehavior: BottomSheetBehavior<*>
+                                        bottomSheetBehavior = BottomSheetBehavior.from(bottompanel)
+                                        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+                                        bottomSheetBehavior.isDraggable = true
+
+                                        bottomSheetBehavior.addBottomSheetCallback(object :
+                                            BottomSheetBehavior.BottomSheetCallback() {
+                                            override fun onStateChanged(bottomSheet: View, state: Int) {
+                                                when (state) {
+                                                    BottomSheetBehavior.STATE_EXPANDED -> { logUtil.d("STATE_EXPANDED"); }
+                                                    BottomSheetBehavior.STATE_COLLAPSED -> { logUtil.d("STATE_COLLAPSED"); } // peek 높이 만큼 보이는 상태
+                                                    BottomSheetBehavior.STATE_HALF_EXPANDED -> { logUtil.d("STATE_HALF_EXPANDED"); } // 반만 보임
+                                                    BottomSheetBehavior.STATE_HIDDEN -> { logUtil.d("STATE_HIDDEN "); rootOverLay.map = null } // 숨김 상태
+                                                }
+                                            }
+
+                                            override fun onSlide(bottomSheet: View, slideOffset: Float) {}
+                                        });
+
+                                        bot_txt_distance.text = "총 거리: ${String.format("%.2f",totalDistance)}km \t 소요시간: ${duariton}분"
+                                        txtRoute.text = sumSectionMsg
+                                    }
+                                }
+
+                                var sumGuidenMsg:String = ""
+                                for(i in 0 until guildLine.size()){
+                                    logUtil.i("가이드라인: ${getResultToGSON(guildLine[i].toString())}")
+
+                                    var guildeMsg = getResultToGSON(guildLine[i].toString()).get("instructions").asString
+                                    var guildeDistance = getResultToGSON(guildLine[i].toString()).get("distance").asString
+                                    guildeDistance = if (guildeDistance.toString().length > 3) { String.format("%.2f", (guildeDistance.toInt() * 0.001)) + "km" } else { guildeDistance.toString() + "m" }
+
+                                    sumGuidenMsg += "상세안내:${guildeMsg}  거리:$guildeDistance \n"
+                                }
+
+                                runOnUiThread { txtGuide.text = sumGuidenMsg }
+
+
                                 runOnUiThread {
-                                    rootOverLay.coords = waypointArr
+                                    rootOverLay.coords = waypointArr;
                                     rootOverLay.map = map
                                 }
 
                             } else {
-                                Toast.makeText(mContext, JSONObject(resultRoot).getString("message"), Toast.LENGTH_SHORT).show()
+                                runOnUiThread { Toast.makeText(mContext, resultRoot.get("message").asString, Toast.LENGTH_SHORT).show() }
                             }
 
                         }
@@ -419,7 +546,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     //마커 스타일
-    private fun setMarkerStyle(marker: Marker, icons: OverlayImage, iconColor: Int, width: Int, height: Int): Marker {
+    fun setMarkerStyle(marker: Marker, icons: OverlayImage, iconColor: Int, width: Int, height: Int): Marker {
         marker.icon = icons
         marker.iconTintColor = iconColor
         marker.width = width
@@ -429,7 +556,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     //마커 스타일 (텍스트)
-    private fun setMarkerText(marker: Marker, text: String, aligns: Align): Marker {
+    fun setMarkerText(marker: Marker, text: String, aligns: Align): Marker {
         marker.captionText = text
         //marker.captionHaloColor = getColor(R.color.crimson)
         marker.captionTextSize = 16f
@@ -437,7 +564,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         return marker
     }
 
-    //private fun cameraUpdate() = CameraUpdate.toCameraPosition(CameraPosition(LatLng(gpsUtil.getLatitude(), gpsUtil.getLongitude()), this.naverMap.cameraPosition.zoom)).animate(CameraAnimation.Easing)
+    // 카메라 이동
+    fun cameraUpdate() = CameraUpdate.toCameraPosition(CameraPosition(LatLng(gpsUtil.getLatitude(), gpsUtil.getLongitude()), this.naverMap.cameraPosition.zoom)).animate(CameraAnimation.Easing)
+
     companion object {
 
         private const val NAVER_LICENSE = "ywgp3sltx8"
@@ -448,6 +577,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 "http://api.vworld.kr/req/address?service=address&request=getCoord&version=2.0&crs=epsg:4326&"
 
         private const val PERMISSION_REQUEST_CODE = 1000
+        private val PERMISSIONS = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION)
         private val TAG: String? = MainActivity::class.simpleName
     }
 

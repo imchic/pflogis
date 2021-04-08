@@ -65,7 +65,7 @@ class GPSUtil(context: Context) : LocationListener {
             ) {
                 return
             }
-            mLocation = mLocationManager!!.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            mLocation = mLocationManager!!.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             if ((ContextCompat.checkSelfPermission(
                     context, Manifest.permission.ACCESS_FINE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED)
@@ -76,7 +76,7 @@ class GPSUtil(context: Context) : LocationListener {
                     LOCATION_PERMISSION_CODE
                 )
             }
-            mLocationManager!!.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 5f, this)
+            mLocationManager!!.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 5f, this)
 
         } catch (e: Exception) {
             TAG?.let { LogUtil(it).e(e.toString()) };
