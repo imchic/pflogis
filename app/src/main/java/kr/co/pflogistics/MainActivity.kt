@@ -449,8 +449,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                              */
                             if(resultRoot.get("code").asString.toString() == "0"){
                                 val totalDistance = ((trafast as JsonObject).get("summary") as JsonObject).get("distance").asString.toInt() * 0.001
-                                var duariton = ((trafast as JsonObject).get("summary") as JsonObject).get("distance").asString.toInt()
-                                duariton = (duariton / 1000) % 60
+                                var duariton = ((trafast as JsonObject).get("summary") as JsonObject).get("duariton").asString.toInt()
+                                duariton = ((duariton / (1000 * 60)) % 60)
+
                                 //val duariton = ((((trafast as JsonObject).get("summary") as JsonObject).get("duration").asString.toInt()) / (1000 * 60)) % 60 )
 
                                 val rootPath = trafast.asJsonObject.get("path").asJsonArray // 경로
@@ -514,6 +515,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                                     var guildeMsg = getResultToGSON(guildLine[i].toString()).get("instructions").asString
                                     var guildeDistance = getResultToGSON(guildLine[i].toString()).get("distance").asString
+                                    var guideDuration = (getResultToGSON(guildLine[i].toString()).get("duration").asString.toInt() % 3600) /60
                                     guildeDistance = if (guildeDistance.toString().length > 3) { String.format("%.2f", (guildeDistance.toInt() * 0.001)) + "km" } else { guildeDistance.toString() + "m" }
 
                                     sumGuidenMsg += "상세안내:${guildeMsg}  거리:$guildeDistance \n"
