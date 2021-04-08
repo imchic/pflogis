@@ -53,11 +53,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // naverSdk
     lateinit var naverMap: NaverMap
-    private lateinit var locationSource: FusedLocationSource
-    private lateinit var uiSettings: UiSettings
+    lateinit var locationSource: FusedLocationSource
+    lateinit var uiSettings: UiSettings
+    lateinit var marker:Marker
+    lateinit var rootOverLay:PolylineOverlay
 
     // customUtil
-    private lateinit var gpsUtil: GPSUtil
+    lateinit var gpsUtil: GPSUtil
     lateinit var logUtil: LogUtil
 
     var lon:Double = 0.0
@@ -134,6 +136,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val searchView: SearchView = findViewById(R.id.search_view)
 
         //SearchRecentSuggestions(this, SearchHistoryProvider.AUTHORITY, SearchHistoryProvider.MODE).clearHistory() // recent value reset
+
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(componentName))
         searchView.setIconifiedByDefault(false)
         searchView.queryHint = "주소입력"
         searchView.setSearchableInfo(searchManager.getSearchableInfo(componentName))
@@ -271,6 +275,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 return false
             }
         })
+        btn_clear.setOnClickListener(object : View.OnClickListener {
+            override fun onClick(p0: View?) {
+                objectClear()
+            }
+        })
     }
 
     // 네이버 MAP SDK Init
@@ -305,7 +314,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         this.uiSettings.isZoomControlEnabled = true
         this.uiSettings.isZoomGesturesEnabled = true
         this.uiSettings.isLocationButtonEnabled = true
-        this.uiSettings.isRotateGesturesEnabled = false
+        this.uiSettings.isRotateGesturesEnabled = true
 
         sw_map_switch.setOnCheckedChangeListener { buttonView, isChecked ->
             if (isChecked) {
@@ -316,6 +325,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         onMapGetXY(lon, lat)
+
+        cameraUpdate()
 
     }
 
@@ -373,7 +384,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     //마커 객체 생성
     fun setMarker(lat: Double, lon: Double) {
-        val marker = Marker()
+        marker = Marker()
         marker.position = LatLng(lat, lon)
 
         var caption = ""
@@ -421,7 +432,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         //logUtil.d(sumSelectedAddr)
 
         val pathOverLay = PathOverlay()
-        val rootOverLay = PolylineOverlay()
+        rootOverLay = PolylineOverlay()
         rootOverLay.joinType = PolylineOverlay.LineJoin.Round
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             rootOverLay.color = getColor(R.color.dark_red)
@@ -497,7 +508,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                                                     BottomSheetBehavior.STATE_EXPANDED -> { logUtil.d("STATE_EXPANDED"); }
                                                     BottomSheetBehavior.STATE_COLLAPSED -> { logUtil.d("STATE_COLLAPSED"); } // peek 높이 만큼 보이는 상태
                                                     BottomSheetBehavior.STATE_HALF_EXPANDED -> { logUtil.d("STATE_HALF_EXPANDED"); } // 반만 보임
-                                                    BottomSheetBehavior.STATE_HIDDEN -> { logUtil.d("STATE_HIDDEN "); rootOverLay.map = null } // 숨김 상태
+                                                    BottomSheetBehavior.STATE_HIDDEN -> { logUtil.d("STATE_HIDDEN "); } // 숨김 상태
                                                 }
                                             }
 
@@ -566,8 +577,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         return marker
     }
 
+    fun objectClear(){
+        //SearchRecentSuggestions(this, SearchHistoryProvider.AUTHORITY, SearchHistoryProvider.MODE).clearHistory()
+        lineLatLngArr.clear()
+        markersArr.clear()
+        waypointArr.clear()
+        selectedAddrArr.clear()
+        marker.map = null
+        rootOverLay.map = null
+    }
+
     // 카메라 이동
-    fun cameraUpdate() = CameraUpdate.toCameraPosition(CameraPosition(LatLng(gpsUtil.getLatitude(), gpsUtil.getLongitude()), this.naverMap.cameraPosition.zoom)).animate(CameraAnimation.Easing)
+    fun cameraUpdate() = CameraUpdate.toCameraPosition(CameraPosition(LatLng(lat, lon), this.naverMap.cameraPosition.zoom)).animate(CameraAnimation.Easing)
 
     companion object {
 

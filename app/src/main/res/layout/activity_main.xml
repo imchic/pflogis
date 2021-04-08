@@ -19,33 +19,62 @@
             app:navermap_zoom="21"
     />
 
-    <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/sw_map_switch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:useMaterialThemeColors="false"
-            app:layout_constraintTop_toBottomOf="@+id/search_view"
-            app:layout_constraintRight_toRightOf="@id/search_view"
-            android:layout_margin="10dp"
-            android:fontFamily="@font/noto_sans_cj_kkr"
-            android:textColor="@color/black"
-            tools:ignore="MissingConstraints"/>
-
-    <androidx.appcompat.widget.SearchView
-            android:id="@+id/search_view"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/white"
-            app:iconifiedByDefault="false"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:layout_editor_absoluteX="0dp"/>
-
-    <ScrollView
-            app:layout_constraintBottom_toBottomOf="parent"
+    <androidx.constraintlayout.widget.ConstraintLayout
+            app:layout_constraintStart_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/search_view"
+            android:background="@color/black"
+            android:alpha="0.6"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+        <com.google.android.material.switchmaterial.SwitchMaterial
+                android:gravity="center"
+                android:id="@+id/sw_map_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:useMaterialThemeColors="false"
+                android:layout_margin="10dp"
+                android:fontFamily="@font/noto_sans_cj_kkr"
+                android:textColor="@color/wheat"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"/>
+
+        <Button
+                android:id="@+id/btn_clear"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="?attr/materialButtonStyle"
+                android:text="초기화"
+                android:gravity="center"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintHorizontal_bias="1"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+        />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.appcompat.widget.SearchView
+            android:background="@color/white"
+            app:voiceIcon="@color/white"
+            android:id="@+id/search_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent"
+    />
+
         <androidx.coordinatorlayout.widget.CoordinatorLayout
+                app:layout_constraintBottom_toBottomOf="parent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
@@ -98,13 +127,13 @@
                                 android:text="실시간 빠른경로"
                                 android:layout_marginStart="20dp"
                                 android:layout_marginEnd="20dp"
-                                android:layout_width="80dp"
+                                android:layout_width="84dp"
                                 android:layout_height="wrap_content"
                                 android:singleLine="true"
                                 android:inputType="text"
                                 android:fontFamily="@font/noto_sans_cj_kkr"
                                 android:textColor="@color/white"
-                                android:textSize="14sp"
+                                android:autoSizeTextType="uniform"
                                 android:textStyle="bold"
                                 android:id="@+id/bot_info_label_1"/>
 
@@ -140,7 +169,7 @@
                                 android:inputType="text"
                                 android:fontFamily="@font/noto_sans_cj_kkr"
                                 android:textColor="@color/white"
-                                android:textSize="14sp"
+                                android:autoSizeTextType="uniform"
                                 android:textStyle="bold"
                                 android:id="@+id/bot_info_label_2"/>
 
@@ -164,7 +193,5 @@
             </FrameLayout>
 
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
-    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
