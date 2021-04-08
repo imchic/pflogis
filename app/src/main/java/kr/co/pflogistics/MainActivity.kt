@@ -449,8 +449,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                              */
                             if(resultRoot.get("code").asString.toString() == "0"){
                                 val totalDistance = ((trafast as JsonObject).get("summary") as JsonObject).get("distance").asString.toInt() * 0.001
-                                var duariton = ((trafast as JsonObject).get("summary") as JsonObject).get("duariton").asString.toInt()
-                                duariton = ((duariton / (1000 * 60)) % 60)
+                                var duration = ((trafast as JsonObject).get("summary") as JsonObject).get("duration").asString.toInt()
+                                duration = ((duration / (1000 * 60)) % 60)
 
                                 //val duariton = ((((trafast as JsonObject).get("summary") as JsonObject).get("duration").asString.toInt()) / (1000 * 60)) % 60 )
 
@@ -504,7 +504,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                                             override fun onSlide(bottomSheet: View, slideOffset: Float) {}
                                         });
 
-                                        bot_txt_distance.text = "총 거리: ${String.format("%.2f",totalDistance)}km \t 소요시간: ${duariton}분"
+                                        bot_txt_distance.text = "총 거리: ${String.format("%.2f",totalDistance)}km \t 소요시간: ${duration}분"
                                         txtRoute.text = sumSectionMsg
                                     }
                                 }
