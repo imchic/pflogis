@@ -11,187 +11,215 @@
              layout="@layout/toolbar"
              android:id="@+id/toolbar"/>-->
 
-    <fragment
-            android:id="@+id/map_fragment"
-            android:name="com.naver.maps.map.MapFragment"
+    <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_top"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.05"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+    <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guide_bottom"
+            android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintGuide_percent="0.93"/>
+
+    <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:navermap_zoom="21"
-    />
+            android:layout_height="0dp"
+            app:layout_constraintTop_toBottomOf="@+id/guide_top"
+            app:layout_constraintBottom_toTopOf="@+id/guide_bottom">
+
+        <fragment
+                android:id="@+id/map_fragment"
+                android:name="com.naver.maps.map.MapFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+        />
+
+    </LinearLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-            app:layout_constraintStart_toEndOf="parent"
-            app:layout_constraintEnd_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/search_view"
-            android:background="@color/black"
-            android:alpha="0.6"
+            app:layout_constraintTop_toTopOf="parent"
+            android:background="@color/white_smoke"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content" android:id="@+id/constraintLayout">
 
-        <com.google.android.material.switchmaterial.SwitchMaterial
+        <androidx.appcompat.widget.SearchView
+                android:id="@+id/search_view"
+                android:background="@color/white_smoke"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:focusable="false"
+                app:iconifiedByDefault="false"
+                app:searchHintIcon="@null"
+                app:layout_constraintHorizontal_chainStyle="spread"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constrainedWidth="true"
+                app:layout_constraintHorizontal_weight="1"
+                app:layout_constraintRight_toLeftOf="@id/btn_clear"
+        />
+
+        <!--<com.google.android.material.switchmaterial.SwitchMaterial
                 android:gravity="center"
                 android:id="@+id/sw_map_switch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:useMaterialThemeColors="false"
-                android:layout_margin="10dp"
                 android:fontFamily="@font/noto_sans_cj_kkr"
                 android:textColor="@color/wheat"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"/>
+        />-->
 
         <Button
                 android:id="@+id/btn_clear"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                style="?attr/materialButtonStyle"
-                android:text="초기화"
-                android:gravity="center"
+                app:icon="@drawable/ic_eraser"
+                style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+                android:text="리셋"
+                android:fontFamily="@font/noto_sans_cj_kkr"
+                android:textStyle="bold"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintHorizontal_bias="1"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
+                app:layout_constraintLeft_toRightOf="@+id/search_view"/>
         />
-
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <androidx.appcompat.widget.SearchView
-            android:background="@color/white"
-            app:voiceIcon="@color/white"
-            android:id="@+id/search_view"
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_navigation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:menu="@menu/bottom_menu"
     />
 
-        <androidx.coordinatorlayout.widget.CoordinatorLayout
-                app:layout_constraintBottom_toBottomOf="parent"
+    <!--<androidx.coordinatorlayout.widget.CoordinatorLayout
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:background="@drawable/bottomsheetshape"
+                app:behavior_hideable="false"
+                app:behavior_peekHeight="24dp"
+                app:layout_behavior="@string/bottom_sheet_behavior"
+                android:id="@+id/bottompanel"
+                tools:ignore="MissingConstraints">
 
-            <FrameLayout
+            <LinearLayout
+                    android:orientation="vertical"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bottomsheetshape"
-                    app:behavior_hideable="false"
-                    app:behavior_peekHeight="34dp"
-                    app:layout_behavior="@string/bottom_sheet_behavior"
-                    android:id="@+id/bottompanel"
-                    tools:ignore="MissingConstraints">
+                    android:layout_height="wrap_content">
 
+                <ImageView
+                        android:id="@+id/bottomsheet_bar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="10dp"
+                        android:src="@drawable/bottmsheet_bar"/>
+
+                <TextView
+                        android:id="@+id/bot_txt_distance"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginEnd="20dp"
+                        android:layout_marginTop="20dp"
+                        android:fontFamily="@font/noto_sans_cj_kkr"
+                        android:gravity="center_horizontal"
+                        android:text="INFO"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                &lt;!&ndash; 실시간 빠른경로 &ndash;&gt;
                 <LinearLayout
-                        android:orientation="vertical"
+                        android:weightSum="100"
+                        android:orientation="horizontal"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
 
-                    <ImageView
-                            android:id="@+id/bottomsheet_bar"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_horizontal"
-                            android:layout_marginTop="15dp"
-                            android:src="@drawable/bottmsheet_bar"/>
-
                     <TextView
-                            android:id="@+id/bot_txt_distance"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:layout_weight="20"
+                            android:text="실시간 빠른경로"
+                            android:drawableLeft="@drawable/ic_distance"
+                            android:drawablePadding="2dp"
                             android:layout_marginStart="20dp"
                             android:layout_marginEnd="20dp"
-                            android:layout_marginTop="20dp"
+                            android:layout_width="104dp"
+                            android:layout_height="wrap_content"
+                            android:singleLine="true"
+                            android:inputType="text"
                             android:fontFamily="@font/noto_sans_cj_kkr"
-                            android:gravity="center_horizontal"
-                            android:text="INFO"
                             android:textColor="@color/white"
-                            android:textSize="16sp"
-                            android:textStyle="bold"/>
+                            android:autoSizeTextType="uniform"
+                            android:textStyle="bold"
+                            android:id="@+id/bot_info_label_1"/>
 
-                    <!-- 실시간 빠른경로 -->
-                    <LinearLayout
-                            android:weightSum="100"
-                            android:orientation="horizontal"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content">
-
-                        <TextView
-                                android:layout_weight="20"
-                                android:text="실시간 빠른경로"
-                                android:layout_marginStart="20dp"
-                                android:layout_marginEnd="20dp"
-                                android:layout_width="84dp"
-                                android:layout_height="wrap_content"
-                                android:singleLine="true"
-                                android:inputType="text"
-                                android:fontFamily="@font/noto_sans_cj_kkr"
-                                android:textColor="@color/white"
-                                android:autoSizeTextType="uniform"
-                                android:textStyle="bold"
-                                android:id="@+id/bot_info_label_1"/>
-
-                        <TextView
-                                android:layout_weight="80"
-                                android:layout_marginStart="20dp"
-                                android:layout_marginEnd="20dp"
-                                android:id="@+id/txtRoute"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/noto_sans_cj_kkr"
-                                android:textColor="#ffffff"
-                                android:textStyle="normal"
-                        />
-
-                    </LinearLayout>
-
-                    <!-- 경로안내 -->
-                    <LinearLayout
-                            android:weightSum="100"
-                            android:orientation="horizontal"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content">
-
-                        <TextView
-                                android:layout_weight="20"
-                                android:text="경로안내"
-                                android:layout_marginStart="20dp"
-                                android:layout_marginEnd="20dp"
-                                android:layout_width="100dp"
-                                android:layout_height="wrap_content"
-                                android:singleLine="true"
-                                android:inputType="text"
-                                android:fontFamily="@font/noto_sans_cj_kkr"
-                                android:textColor="@color/white"
-                                android:autoSizeTextType="uniform"
-                                android:textStyle="bold"
-                                android:id="@+id/bot_info_label_2"/>
-
-                        <TextView
-                                android:autoSizeTextType="uniform"
-                                android:layout_weight="80"
-                                android:layout_marginStart="20dp"
-                                android:layout_marginEnd="20dp"
-                                android:id="@+id/txtGuide"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/noto_sans_cj_kkr"
-                                android:textColor="#ffffff"
-                                android:textStyle="normal"
-                        />
-
-                    </LinearLayout>
+                    <TextView
+                            android:layout_weight="80"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginEnd="20dp"
+                            android:id="@+id/txtRoute"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/noto_sans_cj_kkr"
+                            android:textColor="#ffffff"
+                            android:textStyle="normal"
+                    />
 
                 </LinearLayout>
 
-            </FrameLayout>
+                &lt;!&ndash; 경로안내 &ndash;&gt;
+                <LinearLayout
+                        android:weightSum="100"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-        </androidx.coordinatorlayout.widget.CoordinatorLayout>
+                    <TextView
+                            android:layout_weight="20"
+                            android:text="경로안내"
+                            android:drawableLeft="@drawable/ic_distance"
+                            android:drawablePadding="2dp"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginEnd="20dp"
+                            android:layout_width="100dp"
+                            android:layout_height="wrap_content"
+                            android:singleLine="true"
+                            android:inputType="text"
+                            android:fontFamily="@font/noto_sans_cj_kkr"
+                            android:textColor="@color/white"
+                            android:autoSizeTextType="uniform"
+                            android:textStyle="bold"
+                            android:id="@+id/bot_info_label_2"/>
+
+                    <TextView
+                            android:autoSizeTextType="uniform"
+                            android:layout_weight="80"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginEnd="20dp"
+                            android:id="@+id/txtGuide"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/noto_sans_cj_kkr"
+                            android:textColor="#ffffff"
+                            android:textStyle="normal"
+                    />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>
