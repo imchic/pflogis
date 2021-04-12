@@ -14,16 +14,17 @@
     <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guide_top"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.05"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            app:layout_constraintGuide_begin="49dp"
+    />
 
     <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guide_bottom"
             android:orientation="horizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintGuide_percent="0.93"/>
+            app:layout_constraintGuide_end="57dp"/>
 
     <LinearLayout
             android:layout_width="match_parent"
@@ -43,24 +44,35 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
             app:layout_constraintTop_toTopOf="parent"
-            android:background="@color/white_smoke"
+            android:background="@color/white"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:id="@+id/constraintLayout">
+            android:layout_height="wrap_content"
+            android:id="@+id/constraintLayout">
 
         <androidx.appcompat.widget.SearchView
                 android:id="@+id/search_view"
-                android:background="@color/white_smoke"
-                android:layout_width="wrap_content"
+                android:background="@color/white"
+                app:queryBackground="@color/transparent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:focusable="false"
-                app:iconifiedByDefault="false"
-                app:searchHintIcon="@null"
-                app:layout_constraintHorizontal_chainStyle="spread"
+                app:layout_constraintHorizontal_weight="2"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btn_clear"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+                android:id="@+id/btn_clear"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:icon="@drawable/ic_eraser"
+                style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+                android:text="초기화"
+                android:fontFamily="@font/noto_sans_cj_kkr"
+                android:textStyle="bold"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constrainedWidth="true"
+                app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintHorizontal_weight="1"
-                app:layout_constraintRight_toLeftOf="@id/btn_clear"
         />
 
         <!--<com.google.android.material.switchmaterial.SwitchMaterial
@@ -72,20 +84,6 @@
                 android:fontFamily="@font/noto_sans_cj_kkr"
                 android:textColor="@color/wheat"
         />-->
-
-        <Button
-                android:id="@+id/btn_clear"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:icon="@drawable/ic_eraser"
-                style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
-                android:text="리셋"
-                android:fontFamily="@font/noto_sans_cj_kkr"
-                android:textStyle="bold"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintLeft_toRightOf="@+id/search_view"/>
-        />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

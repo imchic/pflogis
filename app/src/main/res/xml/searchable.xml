@@ -6,6 +6,9 @@
             android:voiceSearchMode="showVoiceSearchButton|launchRecognizer"
             android:searchSuggestAuthority="kr.co.pflogistics.SearchHistoryProvider"
             android:icon="@drawable/ic_baseline_location_on_24"
+            android:searchSuggestIntentAction="android.intent.action.VIEW"
+            android:voiceLanguageModel="web_search"
+            android:voiceLanguage="kr"
             android:searchSuggestSelection=" ?"
 />
 
