@@ -9,19 +9,16 @@ import androidx.room.Query
 
 @Dao
 interface DataDao {
-    @Query("SELECT * FROM pflogis")
+    @Query("SELECT seq, addr, lonlat, memo FROM pflogis GROUP BY addr ORDER BY seq DESC")
     fun getAll(): LiveData<List<Data>>
 
-    @Query("SELECT * FROM pflogis WHERE seq IN (:seqArrs)")
-    fun getSeq(seqArrs: IntArray): List<Data>
-
-    @Query("SELECT * FROM pflogis WHERE addr LIKE :addr LIMIT 1")
-    fun getAddr(addr: String): Data
-
     @Insert(onConflict = REPLACE)
-    fun insert(data: Data)
+    suspend fun insert(vararg data: Data)
 
     @Delete
-    fun delete(data: Data)
+    fun delete(vararg data: Data)
+
+    @Query("DELETE FROM pflogis")
+    fun deleteAll()
 
 }

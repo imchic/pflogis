@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Create by hbim on 2021.
+  ~ Copyright (c) 2021. hbim. All rights reserved.
+  -->
+
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="60dp"
+        android:orientation="horizontal"
+        android:background="@color/white"
+        android:padding="10dp">
+
+    <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:orientation="vertical"
+            android:layout_weight="2"
+    >
+
+        <TextView
+                android:id="@+id/txt1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/noto_sans_cj_kkr"
+                android:textStyle="bold"
+                android:textColor="@color/dark_blue"
+                android:textSize="16sp"
+        />
+
+        <TextView
+                android:id="@+id/txt2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/noto_sans_cj_kkr"
+                android:drawableLeft="@drawable/ic_notes"
+                android:drawablePadding="10dp"
+                android:textSize="16sp"
+        />
+
+
+    </LinearLayout>
+    <FrameLayout
+            android:id="@+id/drag_handle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+    </FrameLayout>
+    <ImageView
+            android:layout_width="30dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_drag_handle"/>
+
+</LinearLayout>
