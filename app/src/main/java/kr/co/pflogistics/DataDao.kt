@@ -21,4 +21,7 @@ interface DataDao {
     @Query("DELETE FROM pflogis")
     fun deleteAll()
 
+    @Query("DELETE FROM pflogis WHERE seq = :seq")
+    suspend fun deleteSeq(seq:Long)
+
 }

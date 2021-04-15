@@ -81,7 +81,7 @@
                 android:layout_height="wrap_content"
                 app:icon="@drawable/ic_distance"
                 style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
-                android:text="경로안내"
+                android:text="길찾기"
                 android:fontFamily="@font/noto_sans_cj_kkr"
                 android:textStyle="bold"
                 app:layout_constraintTop_toTopOf="parent"

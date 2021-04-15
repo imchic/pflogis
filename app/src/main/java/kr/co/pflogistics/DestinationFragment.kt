@@ -26,7 +26,7 @@ class DestinationFragment() : Fragment(), ItemDragListener{
     lateinit var layoutManager:LinearLayoutManager
     lateinit var itemTouchHelper: ItemTouchHelper
     lateinit var mainAdapter:MainAdapter
-
+    var delArr = ArrayList<Int>()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_destination, container, false)
@@ -53,7 +53,7 @@ class DestinationFragment() : Fragment(), ItemDragListener{
 
             if(dataList.size > 0){
 
-                mainAdapter = MainAdapter(dataList, this)
+                mainAdapter = MainAdapter(context!!, dataList, this)
 
                 recyclerView.apply {
                     adapter = mainAdapter
@@ -61,7 +61,7 @@ class DestinationFragment() : Fragment(), ItemDragListener{
                     addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
                 }
 
-                itemTouchHelper = ItemTouchHelper(ItemTouchHelperCallback(mainAdapter))
+                itemTouchHelper = ItemTouchHelper(ItemTouchHelperCallback(context!!, mainAdapter, dataList))
                 itemTouchHelper.attachToRecyclerView(recyclerView)
 
             } else {

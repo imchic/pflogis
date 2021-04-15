@@ -5,10 +5,14 @@
 
 package kr.co.pflogistics
 
+import android.content.Context
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
-class ItemTouchHelperCallback(val listener: ItemActionListener) : ItemTouchHelper.Callback() {
+class ItemTouchHelperCallback(val mContext: Context, val listener: ItemActionListener, val dataList: MutableList<Data>) : ItemTouchHelper.Callback() {
 
     override fun getMovementFlags(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
         val dragFlags = ItemTouchHelper.DOWN or ItemTouchHelper.UP

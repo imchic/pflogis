@@ -19,7 +19,9 @@ abstract class PfDB : RoomDatabase() {
                         context.applicationContext,
                         PfDB::class.java,
                         "pf.db"
-                    ).build()
+                    )
+                    .allowMainThreadQueries()
+                    .build()
                 }
             }
             return INSTANCE

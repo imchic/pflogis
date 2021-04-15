@@ -5,19 +5,30 @@
 
 package kr.co.pflogistics
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import kotlinx.android.synthetic.main.tab_item.view.*
+import kotlinx.coroutines.*
 
 class MainAdapter(
+    context:Context,
     val dataList: MutableList<Data>,
     private val listener: ItemDragListener
 ) : RecyclerView.Adapter<MainAdapter.ViewHolder>(), ItemActionListener {
 
     private val logUtil = LogUtil(TAG!!)
+    var pos:Int = 0
+    var mContext: Context = context
+    var fragment:DestinationFragment = DestinationFragment()
+    lateinit var prefs: PreferenceUtil
+    var delArr = mutableListOf<Int>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.tab_item, parent, false)
@@ -43,8 +54,17 @@ class MainAdapter(
     }
 
     override fun onItemSwiped(position: Int) {
-        dataList.removeAt(position)
-        notifyItemRemoved(position)
+        val db:PfDB = PfDB.getInstance(mContext)!!
+        pos = position
+        prefs = PreferenceUtil(mContext)
+        delArr.add(dataList[position].seq)
+
+        val sumseq = delArr.joinToString(separator = ",")
+        logUtil.d("sumSeq -> $sumseq")
+        prefs.setString("del", sumseq)
+
+        dataList.removeAt(pos)
+        notifyItemRemoved(pos)
     }
 
     inner class ViewHolder(itemView: View, listener: ItemDragListener) : RecyclerView.ViewHolder(itemView) {
